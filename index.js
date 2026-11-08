@@ -3,7 +3,7 @@ import multer from "multer";
 import QRCode from "qrcode";
 import sharp from "sharp";
 import dotenv from "dotenv";
-mport path from "path";
+import path from "path";
 import crypto from "crypto";
 import fs from "fs/promises";
 import { fileURLToPath } from "url";
