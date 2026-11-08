@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <main class="container">
+        <header>
+            <h1>QR Code Generator</h1>
+            <p>Create and share custom QR codes.</p>
+        </header>
+
+        <form id="qrForm">
+
+            <div class="form-group">
+                <label for="type">Content type</label>
+
+                <select id="type" name="type">
+                    <option value="text">Text</option>
+                    <option value="url">Website / Link</option>
+                    <option value="json">JSON Data</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="content">Your content</label>
+
+                <textarea
+                    id="content"
+                    name="content"
+                    rows="5"
+                    placeholder="Enter your text, URL or JSON..."
+                    required
+                ></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="icon">Central icon (optional)</label>
+
+                <input
+                    type="file"
+                    id="icon"
+                    name="icon"
+                    accept=".png,.webp,.svg,image/png,image/webp,image/svg+xml"
+                >
+
+                <small>PNG, WebP or SVG. Maximum 3 MB.</small>
+            </div>
+
+            <button type="submit" id="generateBtn">
+                Generate QR Code
+            </button>
+
+            <p id="status"></p>
+        </form>
+
+        <section id="result" hidden>
+            <h2>Your QR Code</h2>
+
+            <img id="qrPreview" alt="Generated QR Code">
+
+            <div class="share-section">
+                <label>Share link</label>
+
+                <div class="share-link">
+                    <input id="shareURL" readonly>
+                    <button type="button" id="copyBtn">Copy</button>
+                </div>
+
+                <a id="downloadBtn" download="qrcode.jpg">
+                    Download JPEG
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

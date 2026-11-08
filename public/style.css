@@ -1,0 +1,126 @@
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 30px 16px;
+    font-family: Arial, sans-serif;
+    background: #f5f6fa;
+    color: #222;
+}
+
+.container {
+    max-width: 520px;
+    margin: 30px auto;
+    padding: 28px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e5e5;
+}
+
+header {
+    margin-bottom: 30px;
+}
+
+header h1 {
+    margin-bottom: 8px;
+}
+
+header p,
+small {
+    color: #777;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 9px;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font: inherit;
+}
+
+textarea {
+    resize: vertical;
+}
+
+input[type="file"] {
+    padding: 10px;
+}
+
+small {
+    display: block;
+    margin-top: 7px;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 6px;
+    background: #171717;
+    color: white;
+    font-size: 14px;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+#generateBtn {
+    width: 100%;
+}
+
+#result {
+    margin-top: 35px;
+    text-align: center;
+    border-top: 1px solid #eee;
+    padding-top: 25px;
+}
+
+#qrPreview {
+    width: 100%;
+    max-width: 320px;
+    display: block;
+    margin: 20px auto;
+}
+
+.share-section {
+    text-align: left;
+    margin-top: 25px;
+}
+
+.share-link {
+    display: flex;
+    gap: 8px;
+}
+
+.share-link input {
+    min-width: 0;
+}
+
+#downloadBtn {
+    display: inline-block;
+    margin-top: 20px;
+    color: #1759bb;
+}
+
+#status {
+    text-align: center;
+    color: #555;
+}
+
