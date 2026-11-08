@@ -55,7 +55,8 @@ function setIconPreview(file) {
 }
 
 function clearIconFile(event) {
-    event?.stopPropagation();
+    event.preventDefault();
+    event.stopPropagation();
     iconInput.value = "";
     setIconPreview(null);
 }

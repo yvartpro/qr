@@ -235,6 +235,11 @@ textarea:focus {
     align-items: center;
 }
 
+.dropzone-preview[hidden],
+.dropzone-empty[hidden] {
+    display: none !important;
+}
+
 .dropzone-preview img {
     width: 3.2rem;
     height: 3.2rem;
