@@ -1,4 +1,4 @@
 node_modules/
 .env
-uploads/*
-public/generated/*
+uploads/
+public/generated/

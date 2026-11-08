@@ -4,8 +4,6 @@ import QRCode from "qrcode";
 import sharp from "sharp";
 import dotenv from "dotenv";
 import path from "path";
-import crypto from "crypto";
-import fs from "fs/promises";
 import { fileURLToPath } from "url";
 
 dotenv.config();
@@ -15,18 +13,10 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 const PUBLIC_DIR = path.join(__dirname, "public");
-const GENERATED_DIR = path.join(PUBLIC_DIR, "generated");
-const UPLOAD_DIR = path.join(__dirname, "uploads");
-
-// Create required directories
-await fs.mkdir(GENERATED_DIR, { recursive: true });
-await fs.mkdir(UPLOAD_DIR, { recursive: true });
 
 app.use(express.json({ limit: "1mb" }));
 
-// Temporary image upload configuration
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
@@ -49,7 +39,6 @@ const upload = multer({
     }
 });
 
-// Build QR content
 function getQRContent(type, content) {
     if (!content || typeof content !== "string") {
         throw new Error("QR content is required.");
@@ -76,25 +65,24 @@ function getQRContent(type, content) {
     }
 }
 
-// Generate a central icon background
-function createIconBackground() {
+function createIconBackground(size) {
+    const stroke = 3;
+    const inset = stroke / 2;
+
     return Buffer.from(`
-        <svg width="260" height="260" xmlns="http://www.w3.org/2000/svg">
-            <rect
-                x="5"
-                y="5"
-                width="250"
-                height="250"
-                rx="35"
+        <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+            <circle
+                cx="${size / 2}"
+                cy="${size / 2}"
+                r="${(size / 2) - inset}"
                 fill="#ffffff"
-                stroke="#e5e5e5"
-                stroke-width="3"
+                stroke="#e8ebe6"
+                stroke-width="${stroke}"
             />
         </svg>
     `);
 }
 
-// Validate SVG against active content and external references
 function validateSVG(buffer) {
     const svg = buffer.toString("utf8");
 
@@ -113,17 +101,16 @@ function validateSVG(buffer) {
     }
 }
 
-// Generate QR image
 async function generateQR(content, iconBuffer = null) {
-    // High error correction helps QR codes remain readable
-    // when a logo is placed in their center.
+    const qrSize = 1000;
+
     const qrBuffer = await QRCode.toBuffer(content, {
         type: "png",
-        width: 1000,
+        width: qrSize,
         margin: 4,
         errorCorrectionLevel: "H",
         color: {
-            dark: "#000000",
+            dark: "#14201a",
             light: "#ffffff"
         }
     });
@@ -137,24 +124,37 @@ async function generateQR(content, iconBuffer = null) {
             throw new Error("Unsupported icon format.");
         }
 
+        const plateSize = 176;
+        const iconSize = 128;
+        const plateLeft = Math.round((qrSize - plateSize) / 2);
+        const iconLeft = Math.round((qrSize - iconSize) / 2);
+
         const icon = await sharp(iconBuffer)
-            .resize(190, 190, {
-                fit: "contain",
+            .resize(iconSize, iconSize, {
+                fit: "cover",
                 background: "#ffffff"
             })
+            .composite([{
+                input: Buffer.from(`
+                    <svg width="${iconSize}" height="${iconSize}">
+                        <circle cx="${iconSize / 2}" cy="${iconSize / 2}" r="${iconSize / 2}" fill="#fff"/>
+                    </svg>
+                `),
+                blend: "dest-in"
+            }])
             .png()
             .toBuffer();
 
         image = image.composite([
             {
-                input: createIconBackground(),
-                left: 370,
-                top: 370
+                input: createIconBackground(plateSize),
+                left: plateLeft,
+                top: plateLeft
             },
             {
                 input: icon,
-                left: 405,
-                top: 405
+                left: iconLeft,
+                top: iconLeft
             }
         ]);
     }
@@ -168,14 +168,12 @@ async function generateQR(content, iconBuffer = null) {
         .toBuffer();
 }
 
-// API: Generate and save QR code
 app.post(
     "/api/generate",
     upload.single("icon"),
     async (req, res) => {
         try {
             const { type = "text", content } = req.body;
-
             const qrContent = getQRContent(type, content);
 
             let iconBuffer = null;
@@ -188,36 +186,15 @@ app.post(
                 }
             }
 
-            const qrImage = await generateQR(
-                qrContent,
-                iconBuffer
-            );
+            const qrImage = await generateQR(qrContent, iconBuffer);
 
-            // Unique filename
-            const filename = `${crypto.randomUUID()}.jpg`;
-
-            const filePath = path.join(
-                GENERATED_DIR,
-                filename
-            );
-
-            await fs.writeFile(filePath, qrImage);
-
-            // Construct public share URL
-            const baseURL = (
-                process.env.BASE_URL ||
-                `${req.protocol}://${req.get("host")}`
-            ).replace(/\/$/, "");
-
-            const shareURL = `${baseURL}/generated/${filename}`;
-
-            res.status(201).json({
-                success: true,
-                message: "QR code generated successfully.",
-                filename,
-                shareURL
+            res.set({
+                "Content-Type": "image/jpeg",
+                "Content-Disposition": "inline; filename=\"giraso-qr.jpg\"",
+                "Cache-Control": "no-store"
             });
 
+            res.status(200).send(qrImage);
         } catch (error) {
             console.error("QR generation error:", error);
 
@@ -229,15 +206,12 @@ app.post(
     }
 );
 
-// Explicitly serve the frontend
 app.get("/", (req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, "index.html"));
 });
 
-// Static files: CSS, JS and generated QR images
 app.use(express.static(PUBLIC_DIR));
 
-// General error handler
 app.use((err, req, res, next) => {
     console.error(err);
 
@@ -250,4 +224,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`QR Generator running on port ${PORT}`);
 });
-
