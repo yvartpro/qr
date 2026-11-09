@@ -1,224 +1,229 @@
-import express from "express";
-import multer from "multer";
-import QRCode from "qrcode";
-import sharp from "sharp";
 import dotenv from "dotenv";
+import express from "express";
+import { rateLimit } from "express-rate-limit";
+import helmet from "helmet";
+import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
+import { UserError, buildContent, chooseCorrection, normalizeUrl } from "./lib/content.js";
+import { openLinkStore } from "./lib/links.js";
+import {
+    FORMATS,
+    SIZES,
+    renderQR,
+    validateColors,
+    validateFrameText,
+    validateSVG
+} from "./lib/render.js";
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const app = express();
-const PORT = process.env.PORT || 3000;
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, "public");
+const PORT = process.env.PORT || 3000;
+const BASE_URL = process.env.BASE_URL?.replace(/\/+$/, "");
 
-app.use(express.json({ limit: "1mb" }));
+const links = openLinkStore(process.env.DB_PATH || path.join(__dirname, "data", "qr.sqlite"));
+const app = express();
+
+// nginx sits in front of the app; rate limits need the real client address.
+app.set("trust proxy", 1);
+
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            "style-src": ["'self'", "https://fonts.googleapis.com"],
+            "font-src": ["'self'", "https://fonts.gstatic.com"],
+            "img-src": ["'self'", "data:", "blob:"],
+            "upgrade-insecure-requests": null
+        }
+    }
+}));
+
+function limiter(windowMinutes, limit) {
+    return rateLimit({
+        windowMs: windowMinutes * 60 * 1000,
+        limit,
+        standardHeaders: "draft-7",
+        legacyHeaders: false,
+        message: { success: false, message: "Too many requests. Please wait a moment and try again." }
+    });
+}
 
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 3 * 1024 * 1024
-    },
+    limits: { fileSize: 3 * 1024 * 1024, files: 1 },
     fileFilter: (req, file, callback) => {
-        const allowed = [
-            "image/png",
-            "image/webp",
-            "image/svg+xml"
-        ];
-
-        if (!allowed.includes(file.mimetype)) {
-            return callback(
-                new Error("Only PNG, WebP and SVG images are allowed.")
-            );
+        if (!["image/png", "image/webp", "image/svg+xml"].includes(file.mimetype)) {
+            return callback(new UserError("Only PNG, WebP and SVG images are allowed."));
         }
 
         callback(null, true);
     }
 });
 
-function getQRContent(type, content) {
-    if (!content || typeof content !== "string") {
-        throw new Error("QR content is required.");
-    }
+// Live preview sends a request after each pause in typing, so this is generous.
+app.post("/api/generate", limiter(1, 200), upload.single("icon"), async (req, res, next) => {
+    try {
+        const {
+            type = "url",
+            format = "png",
+            dark = "#0a3d1f",
+            light = "#ffffff",
+            iconShape = "square"
+        } = req.body;
+        const size = Number(req.body.size) || 1000;
+        const frameText = typeof req.body.frameText === "string" ? req.body.frameText.trim() : "";
 
-    const value = content.trim();
-
-    if (!value || value.length > 3000) {
-        throw new Error("Content must contain 1–3000 characters.");
-    }
-
-    switch (type) {
-        case "text":
-        case "url":
-            return value;
-
-        case "json": {
-            const parsed = JSON.parse(value);
-            return JSON.stringify(parsed);
+        if (!Object.hasOwn(FORMATS, format)) {
+            throw new UserError("Unsupported download format.");
         }
 
-        default:
-            throw new Error("Unsupported QR content type.");
-    }
-}
-
-function createIconBackground(size) {
-    const stroke = 3;
-    const inset = stroke / 2;
-
-    return Buffer.from(`
-        <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-            <circle
-                cx="${size / 2}"
-                cy="${size / 2}"
-                r="${(size / 2) - inset}"
-                fill="#ffffff"
-                stroke="#e8ebe6"
-                stroke-width="${stroke}"
-            />
-        </svg>
-    `);
-}
-
-function validateSVG(buffer) {
-    const svg = buffer.toString("utf8");
-
-    const dangerous = [
-        /<script\b/i,
-        /<foreignObject\b/i,
-        /\bon\w+\s*=/i,
-        /<!ENTITY/i,
-        /<!DOCTYPE/i,
-        /(?:href|src)\s*=\s*["']\s*(?:https?:|\/\/|file:)/i
-    ];
-
-    if (!/<svg[\s>]/i.test(svg) ||
-        dangerous.some(pattern => pattern.test(svg))) {
-        throw new Error("Invalid or unsafe SVG image.");
-    }
-}
-
-async function generateQR(content, iconBuffer = null) {
-    const qrSize = 1000;
-
-    const qrBuffer = await QRCode.toBuffer(content, {
-        type: "png",
-        width: qrSize,
-        margin: 4,
-        errorCorrectionLevel: "H",
-        color: {
-            dark: "#14201a",
-            light: "#ffffff"
-        }
-    });
-
-    let image = sharp(qrBuffer);
-
-    if (iconBuffer) {
-        const metadata = await sharp(iconBuffer).metadata();
-
-        if (!["png", "webp", "svg"].includes(metadata.format)) {
-            throw new Error("Unsupported icon format.");
+        if (!SIZES.includes(size)) {
+            throw new UserError("Unsupported image size.");
         }
 
-        const plateSize = 176;
-        const iconSize = 128;
-        const plateLeft = Math.round((qrSize - plateSize) / 2);
-        const iconLeft = Math.round((qrSize - iconSize) / 2);
-
-        const icon = await sharp(iconBuffer)
-            .resize(iconSize, iconSize, {
-                fit: "cover",
-                background: "#ffffff"
-            })
-            .composite([{
-                input: Buffer.from(`
-                    <svg width="${iconSize}" height="${iconSize}">
-                        <circle cx="${iconSize / 2}" cy="${iconSize / 2}" r="${iconSize / 2}" fill="#fff"/>
-                    </svg>
-                `),
-                blend: "dest-in"
-            }])
-            .png()
-            .toBuffer();
-
-        image = image.composite([
-            {
-                input: createIconBackground(plateSize),
-                left: plateLeft,
-                top: plateLeft
-            },
-            {
-                input: icon,
-                left: iconLeft,
-                top: iconLeft
-            }
-        ]);
-    }
-
-    return image
-        .flatten({ background: "#ffffff" })
-        .jpeg({
-            quality: 95,
-            mozjpeg: true
-        })
-        .toBuffer();
-}
-
-app.post(
-    "/api/generate",
-    upload.single("icon"),
-    async (req, res) => {
-        try {
-            const { type = "text", content } = req.body;
-            const qrContent = getQRContent(type, content);
-
-            let iconBuffer = null;
-
-            if (req.file) {
-                iconBuffer = req.file.buffer;
-
-                if (req.file.mimetype === "image/svg+xml") {
-                    validateSVG(iconBuffer);
-                }
-            }
-
-            const qrImage = await generateQR(qrContent, iconBuffer);
-
-            res.set({
-                "Content-Type": "image/jpeg",
-                "Content-Disposition": "inline; filename=\"giraso-qr.jpg\"",
-                "Cache-Control": "no-store"
-            });
-
-            res.status(200).send(qrImage);
-        } catch (error) {
-            console.error("QR generation error:", error);
-
-            res.status(400).json({
-                success: false,
-                message: error.message || "Unable to generate QR code."
-            });
+        if (!["square", "circle"].includes(iconShape)) {
+            throw new UserError("Unsupported icon shape.");
         }
-    }
-);
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(PUBLIC_DIR, "index.html"));
+        validateColors(dark, light);
+        validateFrameText(frameText);
+
+        const content = buildContent(type, req.body);
+        const iconBuffer = req.file?.buffer ?? null;
+
+        if (req.file?.mimetype === "image/svg+xml") {
+            validateSVG(iconBuffer);
+        }
+
+        const { level, bytes, limit } = chooseCorrection(content, Boolean(iconBuffer));
+        const image = await renderQR({
+            content,
+            level,
+            format,
+            size,
+            dark,
+            light,
+            frameText,
+            iconBuffer,
+            iconShape
+        });
+
+        res.set({
+            "Content-Type": FORMATS[format],
+            "Cache-Control": "no-store",
+            "X-QR-Bytes": String(bytes),
+            "X-QR-Limit": String(limit)
+        });
+        res.send(image);
+    } catch (error) {
+        next(error);
+    }
 });
 
-app.use(express.static(PUBLIC_DIR));
+function bearerToken(req) {
+    return req.get("authorization")?.match(/^Bearer ([\w-]{20,64})$/)?.[1] ?? null;
+}
+
+function shortUrl(req, slug) {
+    return `${BASE_URL || `${req.protocol}://${req.get("host")}`}/r/${slug}`;
+}
+
+function validDestination(req, input) {
+    const destination = normalizeUrl(input);
+    const ownHost = new URL(shortUrl(req, "x")).host;
+
+    if (new URL(destination).host === ownHost) {
+        throw new UserError("An editable link can't point back to this site.");
+    }
+
+    return destination;
+}
+
+function requireLink(req, res, next) {
+    const token = bearerToken(req);
+    const details = token && links.details(token);
+
+    if (!details) {
+        return res.status(404).json({ success: false, message: "This link no longer exists." });
+    }
+
+    req.linkToken = token;
+    req.linkDetails = details;
+    next();
+}
+
+const linkJson = express.json({ limit: "10kb" });
+const manageLimit = limiter(1, 60);
+
+app.post("/api/links", limiter(60, 30), linkJson, (req, res, next) => {
+    try {
+        const { slug, token } = links.create(validDestination(req, req.body?.destination));
+        const base = new URL(shortUrl(req, slug)).origin;
+
+        res.status(201).json({
+            shortUrl: shortUrl(req, slug),
+            manageUrl: `${base}/manage#${token}`
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.get("/api/links/me", manageLimit, requireLink, (req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json({ ...req.linkDetails, shortUrl: shortUrl(req, req.linkDetails.slug) });
+});
+
+app.patch("/api/links/me", manageLimit, linkJson, requireLink, (req, res, next) => {
+    try {
+        const destination = validDestination(req, req.body?.destination);
+
+        links.update(req.linkToken, destination);
+        res.json({ destination });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.delete("/api/links/me", manageLimit, requireLink, (req, res) => {
+    links.remove(req.linkToken);
+    res.status(204).end();
+});
+
+app.get("/r/:slug", limiter(1, 300), (req, res) => {
+    const destination = links.destination(req.params.slug);
+
+    if (!destination) {
+        return res.status(404).sendFile(path.join(PUBLIC_DIR, "link-missing.html"));
+    }
+
+    if (req.method === "GET") {
+        links.recordScan(req.params.slug);
+    }
+
+    res.set("Cache-Control", "no-store");
+    res.redirect(302, destination);
+});
+
+app.use(express.static(PUBLIC_DIR, { extensions: ["html"] }));
 
 app.use((err, req, res, next) => {
-    console.error(err);
+    if (err instanceof UserError || err instanceof multer.MulterError) {
+        const message = err.code === "LIMIT_FILE_SIZE"
+            ? "The icon must be 3 MB or smaller."
+            : err.message;
 
-    res.status(400).json({
-        success: false,
-        message: err.message || "An unexpected error occurred."
-    });
+        return res.status(400).json({ success: false, message });
+    }
+
+    if (err.type === "entity.parse.failed" || err.type === "entity.too.large") {
+        return res.status(400).json({ success: false, message: "Invalid request." });
+    }
+
+    console.error(err);
+    res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
 });
 
 app.listen(PORT, () => {

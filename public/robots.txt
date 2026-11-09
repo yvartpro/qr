@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /api/
+Disallow: /r/
+Disallow: /manage
+
+Sitemap: https://qr.giraso.bi/sitemap.xml

@@ -6,16 +6,19 @@
   "author": "Giraso",
   "type": "module",
   "main": "index.js",
-
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
-
   "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "better-sqlite3": "^13.0.3",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.7.3",
+    "helmet": "^8.3.0",
     "multer": "^2.0.2",
+    "opentype.js": "^2.0.0",
     "qrcode": "^1.5.4",
     "sharp": "^0.33.5"
   }

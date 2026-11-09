@@ -1,14 +1,15 @@
 :root {
-    --ink: #14201a;
+    --ink: #0b1210;
     --muted: #5c6b62;
     --line: #d7ddd8;
-    --paper: #f3f6f2;
+    --paper: #FAF8F3;
     --panel: #ffffff;
-    --leaf: #1f6b45;
-    --leaf-deep: #155334;
-    --glow: rgba(31, 107, 69, 0.12);
+    --leaf: #15803d;
+    --leaf-deep: #0a3d1f;
+    --glow: rgba(21, 128, 61, 0.12);
+    --gold: #C9A227;
     --font-display: "Fraunces", Georgia, serif;
-    --font-body: "Manrope", sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
 }
 
 * {
@@ -23,7 +24,7 @@ body {
     background:
         radial-gradient(ellipse 80% 50% at 10% -10%, var(--glow), transparent 55%),
         radial-gradient(ellipse 60% 40% at 100% 0%, rgba(20, 32, 26, 0.06), transparent 50%),
-        linear-gradient(180deg, #eef3ee 0%, var(--paper) 40%, #e8efe9 100%);
+        linear-gradient(180deg, #f4f2ea 0%, var(--paper) 40%, #f1eee4 100%);
 }
 
 .page {
@@ -107,7 +108,7 @@ label {
 
 .segmented {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.3rem;
     padding: 0.3rem;
     border: 1px solid var(--line);
@@ -133,7 +134,7 @@ label {
     min-height: 2.45rem;
     border-radius: 9px;
     color: var(--muted);
-    font-size: 0.92rem;
+    font-size: 0.84rem;
     font-weight: 600;
     transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -149,7 +150,11 @@ label {
     outline-offset: 2px;
 }
 
-textarea {
+textarea,
+input[type="text"],
+input[type="tel"],
+input[type="email"],
+select {
     width: 100%;
     padding: 0.8rem 0.9rem;
     border: 1px solid var(--line);
@@ -157,12 +162,19 @@ textarea {
     background: #fafcf9;
     color: var(--ink);
     font: inherit;
-    resize: vertical;
-    min-height: 6.5rem;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-textarea:focus {
+textarea {
+    display: block;
+    resize: vertical;
+}
+
+textarea:focus,
+input[type="text"]:focus,
+input[type="tel"]:focus,
+input[type="email"]:focus,
+select:focus {
     outline: none;
     border-color: var(--leaf);
     box-shadow: 0 0 0 3px var(--glow);
@@ -280,8 +292,8 @@ textarea:focus {
     background: #fff;
 }
 
-button#generateBtn,
-#downloadBtn {
+.download-btn,
+.secondary-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -299,24 +311,24 @@ button#generateBtn,
     transition: background 0.15s ease, transform 0.15s ease;
 }
 
-button#generateBtn:hover,
-#downloadBtn:hover {
+.download-btn:hover {
     background: var(--leaf-deep);
 }
 
-button#generateBtn:active,
-#downloadBtn:active {
+.download-btn:active,
+.secondary-btn:active {
     transform: translateY(1px);
 }
 
-button#generateBtn:disabled {
+.download-btn:disabled,
+.secondary-btn:disabled {
     opacity: 0.55;
     cursor: wait;
 }
 
 #status {
     min-height: 1.25rem;
-    margin: 0.85rem 0 0;
+    margin: 0.5rem 0 0;
     text-align: center;
     color: var(--muted);
     font-size: 0.9rem;
@@ -335,21 +347,241 @@ button#generateBtn:disabled {
     margin: 0 auto 1.1rem;
     border-radius: 12px;
     background: #fff;
+    transition: opacity 0.15s ease;
+}
+
+#result.is-stale #qrPreview {
+    opacity: 0.45;
 }
 
 footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 1.1rem;
     margin-top: 1.5rem;
-    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
 }
 
 footer a {
     color: var(--muted);
-    font-size: 0.85rem;
     text-decoration: none;
 }
 
 footer a:hover {
     color: var(--leaf);
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.secondary-btn {
+    background: #fff;
+    color: var(--leaf-deep);
+    box-shadow: inset 0 0 0 1.5px var(--leaf);
+}
+
+.secondary-btn:hover {
+    background: #eef6f0;
+}
+
+#result .split {
+    margin-top: 0.6rem;
+}
+
+#result .form-group {
+    text-align: left;
+}
+
+.split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+a.ghost-btn {
+    text-decoration: none;
+}
+
+input[type="color"] {
+    display: block;
+    width: 100%;
+    height: 2.75rem;
+    padding: 0.2rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.check {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    margin-bottom: 1.15rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.check input {
+    margin-top: 0.15rem;
+    accent-color: var(--leaf);
+}
+
+.check small {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+.check.compact {
+    margin: 0;
+}
+
+.inline-options {
+    display: flex;
+    gap: 1.2rem;
+    margin-top: 0.7rem;
+}
+
+#dynamicCreate {
+    margin-bottom: 1.15rem;
+}
+
+.notice {
+    margin-bottom: 1.15rem;
+    padding: 0.9rem 1rem;
+    border-left: 3px solid var(--gold);
+    border-radius: 0 10px 10px 0;
+    background: #fbf7e8;
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+
+.notice p {
+    margin: 0 0 0.55rem;
+}
+
+.mono {
+    overflow-wrap: anywhere;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.84rem;
+}
+
+.style-options {
+    margin-bottom: 1.15rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem;
+}
+
+.style-options summary {
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.style-options[open] summary {
+    margin-bottom: 0.8rem;
+}
+
+.style-options .form-group:last-child {
+    margin-bottom: 0.25rem;
+}
+
+.cta {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: var(--leaf-deep);
+    color: #fff;
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.cta p {
+    margin: 0.3rem 0 0.7rem;
+    opacity: 0.85;
+}
+
+.cta a {
+    color: var(--gold);
+    font-weight: 700;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+    margin: 1rem 0 1.25rem;
+}
+
+.stats dt {
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.stats dd {
+    margin: 0.15rem 0 0;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.danger {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.88rem;
+}
+
+.danger p {
+    margin: 0 0 0.6rem;
+}
+
+.prose {
+    line-height: 1.55;
+}
+
+.prose h2 {
+    margin: 1.2rem 0 0.35rem;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.prose h2:first-child {
+    margin-top: 0;
+}
+
+.prose p {
+    margin: 0 0 0.6rem;
+    color: var(--muted);
+}
+
+.prose a {
+    color: var(--leaf);
+}
+
+@media (max-width: 400px) {
+    .segment span {
+        font-size: 0.76rem;
+    }
+
+    .stats dd {
+        font-size: 1.1rem;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

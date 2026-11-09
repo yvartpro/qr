@@ -31,7 +31,6 @@ jobs:
             git stash
             git pull origin deploy
 
-            npm install
-            npm run build
+            npm ci --omit=dev
 
             pm2 restart qr

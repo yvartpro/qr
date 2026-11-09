@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage your QR link — Giraso QR</title>
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="page">
+        <header class="brand">
+            <a class="logo" href="/">Giraso</a>
+            <h1>Manage link</h1>
+        </header>
+
+        <main class="panel">
+            <p id="missing" hidden>This link doesn't exist, or the private address is incomplete.</p>
+
+            <div id="details" hidden>
+                <p class="mono" id="shortUrl"></p>
+
+                <dl class="stats">
+                    <div><dt>Total scans</dt><dd id="scans"></dd></div>
+                    <div><dt>Last 30 days</dt><dd id="recent"></dd></div>
+                    <div><dt>Last scan</dt><dd id="lastScan"></dd></div>
+                </dl>
+
+                <form id="editForm" novalidate>
+                    <div class="form-group">
+                        <label for="destination">Where the code goes</label>
+                        <input id="destination" type="text" inputmode="url">
+                    </div>
+                    <button type="submit" class="download-btn">Save</button>
+                    <p id="status" role="status"></p>
+                </form>
+
+                <div class="danger">
+                    <button type="button" id="deleteBtn" class="ghost-btn">Delete this link</button>
+                    <div id="deleteConfirm" hidden>
+                        <p>Printed codes will stop working. This can't be undone.</p>
+                        <div class="row">
+                            <button type="button" id="deleteYes" class="ghost-btn">Yes, delete</button>
+                            <button type="button" id="deleteNo" class="ghost-btn">Keep it</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <span>© Giraso Technologies</span>
+            <a href="/privacy">Privacy</a>
+            <a href="/">Make a QR code</a>
+        </footer>
+    </div>
+
+    <script src="/manage.js"></script>
+</body>
+</html>

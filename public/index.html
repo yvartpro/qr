@@ -3,10 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giraso QR</title>
+    <title>Free QR Code Generator — Giraso QR</title>
+    <meta name="description" content="Create free QR codes for links, WhatsApp, Wi-Fi, contact cards and more. Add your logo and colors, then download PNG, SVG or JPEG.">
+    <meta name="theme-color" content="#07150d">
+    <link rel="canonical" href="https://qr.giraso.bi/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Giraso Technologies">
+    <meta property="og:title" content="Free QR Code Generator — Giraso QR">
+    <meta property="og:description" content="Create QR codes for links, WhatsApp, Wi-Fi and contact cards, with your logo and colors.">
+    <meta property="og:url" content="https://qr.giraso.bi/">
+    <meta property="og:image" content="https://qr.giraso.bi/apple-touch-icon.png">
+    <meta name="twitter:card" content="summary">
+
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -14,39 +31,170 @@
         <header class="brand">
             <a class="logo" href="https://giraso.bi/" target="_blank" rel="noopener">Giraso</a>
             <h1>QR</h1>
-            <p>Make a code, download it, share it. Nothing is stored.</p>
+            <p>Make a code, download it, share it. Regular codes are never stored.</p>
         </header>
 
         <main class="panel">
-            <form id="qrForm">
+            <form id="qrForm" novalidate>
                 <div class="form-group">
                     <span class="field-label" id="typeLabel">Content type</span>
                     <div class="segmented" role="radiogroup" aria-labelledby="typeLabel">
-                        <label class="segment">
-                            <input type="radio" name="type" value="url" checked>
-                            <span>Link</span>
-                        </label>
-                        <label class="segment">
-                            <input type="radio" name="type" value="text">
-                            <span>Text</span>
-                        </label>
-                        <label class="segment">
-                            <input type="radio" name="type" value="json">
-                            <span>JSON</span>
-                        </label>
+                        <label class="segment"><input type="radio" name="type" value="url" checked><span>Link</span></label>
+                        <label class="segment"><input type="radio" name="type" value="whatsapp"><span>WhatsApp</span></label>
+                        <label class="segment"><input type="radio" name="type" value="wifi"><span>Wi-Fi</span></label>
+                        <label class="segment"><input type="radio" name="type" value="vcard"><span>Contact</span></label>
+                        <label class="segment"><input type="radio" name="type" value="phone"><span>Phone</span></label>
+                        <label class="segment"><input type="radio" name="type" value="email"><span>Email</span></label>
+                        <label class="segment"><input type="radio" name="type" value="sms"><span>SMS</span></label>
+                        <label class="segment"><input type="radio" name="type" value="text"><span>Text</span></label>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="content">Your content</label>
-                    <textarea
-                        id="content"
-                        name="content"
-                        rows="4"
-                        placeholder="https://example.com"
-                        required
-                    ></textarea>
+                <div class="fields" data-type="url">
+                    <div class="form-group">
+                        <label for="url">Link</label>
+                        <input id="url" name="url" type="text" inputmode="url" autocomplete="url" placeholder="example.com" data-primary>
+                    </div>
+                    <label class="check">
+                        <input type="checkbox" id="dynamicToggle">
+                        <span>
+                            <strong>Make it editable</strong>
+                            <small>Change where the code goes after printing and see scan counts. The destination is stored by Giraso.</small>
+                        </span>
+                    </label>
+                    <button type="button" id="dynamicCreate" class="secondary-btn" hidden>Create editable link</button>
+                    <div id="dynamicResult" class="notice" hidden>
+                        <p><strong>Your code points to</strong> <span id="dynamicShort" class="mono"></span></p>
+                        <p><strong>Save this private link.</strong> It's the only way to edit this code, and it can't be recovered.</p>
+                        <p id="dynamicManage" class="mono"></p>
+                        <div class="row">
+                            <button type="button" id="dynamicCopy" class="ghost-btn">Copy private link</button>
+                            <a id="dynamicOpen" class="ghost-btn" target="_blank" rel="noopener">Open</a>
+                            <button type="button" id="dynamicReset" class="ghost-btn">Start over</button>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="fields" data-type="whatsapp" hidden>
+                    <div class="form-group">
+                        <label for="waPhone">WhatsApp number</label>
+                        <input id="waPhone" name="wa_phone" type="tel" placeholder="+257 79 000 000" data-primary>
+                    </div>
+                    <div class="form-group">
+                        <label for="waMessage">Ready-made message <span class="optional">(optional)</span></label>
+                        <textarea id="waMessage" name="wa_message" rows="2" placeholder="Hello, I'd like to know more"></textarea>
+                    </div>
+                </div>
+
+                <div class="fields" data-type="wifi" hidden>
+                    <div class="form-group">
+                        <label for="wifiSsid">Network name</label>
+                        <input id="wifiSsid" name="wifi_ssid" type="text" autocomplete="off" data-primary>
+                    </div>
+                    <div class="form-group">
+                        <label for="wifiEncryption">Security</label>
+                        <select id="wifiEncryption" name="wifi_encryption">
+                            <option value="WPA">WPA / WPA2 / WPA3</option>
+                            <option value="WEP">WEP</option>
+                            <option value="nopass">None (open network)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="wifiPasswordGroup">
+                        <label for="wifiPassword">Password</label>
+                        <input id="wifiPassword" name="wifi_password" type="text" autocomplete="off">
+                    </div>
+                    <label class="check">
+                        <input type="checkbox" name="wifi_hidden" value="1">
+                        <span><strong>Hidden network</strong></span>
+                    </label>
+                </div>
+
+                <div class="fields" data-type="vcard" hidden>
+                    <div class="form-group">
+                        <label for="vcName">Full name</label>
+                        <input id="vcName" name="vc_name" type="text" autocomplete="name" data-primary>
+                    </div>
+                    <div class="split">
+                        <div class="form-group">
+                            <label for="vcOrg">Organization <span class="optional">(optional)</span></label>
+                            <input id="vcOrg" name="vc_org" type="text" autocomplete="organization">
+                        </div>
+                        <div class="form-group">
+                            <label for="vcTitle">Job title <span class="optional">(optional)</span></label>
+                            <input id="vcTitle" name="vc_title" type="text" autocomplete="organization-title">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="vcPhone">Phone <span class="optional">(optional)</span></label>
+                        <input id="vcPhone" name="vc_phone" type="tel" autocomplete="tel" placeholder="+257 79 000 000">
+                    </div>
+                    <div class="form-group">
+                        <label for="vcEmail">Email <span class="optional">(optional)</span></label>
+                        <input id="vcEmail" name="vc_email" type="email" autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="vcUrl">Website <span class="optional">(optional)</span></label>
+                        <input id="vcUrl" name="vc_url" type="text" inputmode="url" autocomplete="url">
+                    </div>
+                </div>
+
+                <div class="fields" data-type="phone" hidden>
+                    <div class="form-group">
+                        <label for="phone">Phone number</label>
+                        <input id="phone" name="phone" type="tel" placeholder="+257 79 000 000" data-primary>
+                    </div>
+                </div>
+
+                <div class="fields" data-type="email" hidden>
+                    <div class="form-group">
+                        <label for="email">Email address</label>
+                        <input id="email" name="email" type="email" placeholder="hello@example.com" data-primary>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailSubject">Subject <span class="optional">(optional)</span></label>
+                        <input id="emailSubject" name="email_subject" type="text">
+                    </div>
+                    <div class="form-group">
+                        <label for="emailBody">Message <span class="optional">(optional)</span></label>
+                        <textarea id="emailBody" name="email_body" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="fields" data-type="sms" hidden>
+                    <div class="form-group">
+                        <label for="smsPhone">Phone number</label>
+                        <input id="smsPhone" name="sms_phone" type="tel" placeholder="+257 79 000 000" data-primary>
+                    </div>
+                    <div class="form-group">
+                        <label for="smsMessage">Message <span class="optional">(optional)</span></label>
+                        <textarea id="smsMessage" name="sms_message" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="fields" data-type="text" hidden>
+                    <div class="form-group">
+                        <label for="text">Text</label>
+                        <textarea id="text" name="text" rows="4" placeholder="Hello from Giraso" data-primary></textarea>
+                    </div>
+                </div>
+
+                <details class="style-options">
+                    <summary>Style</summary>
+                    <div class="split">
+                        <div class="form-group">
+                            <label for="dark">Code color</label>
+                            <input id="dark" name="dark" type="color" value="#0a3d1f">
+                        </div>
+                        <div class="form-group">
+                            <label for="light">Background</label>
+                            <input id="light" name="light" type="color" value="#ffffff">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="frameText">Frame text <span class="optional">(optional)</span></label>
+                        <input id="frameText" name="frameText" type="text" maxlength="30" placeholder="Scan me">
+                    </div>
+                </details>
 
                 <div class="form-group">
                     <span class="field-label">Center icon <span class="optional">(optional)</span></span>
@@ -79,20 +227,41 @@
                             <button type="button" id="clearIcon" class="ghost-btn" aria-label="Remove icon">Remove</button>
                         </div>
                     </div>
+                    <div id="iconShapeGroup" class="inline-options" hidden>
+                        <label class="check compact"><input type="radio" name="iconShape" value="square" checked><span>Whole image</span></label>
+                        <label class="check compact"><input type="radio" name="iconShape" value="circle"><span>Crop to circle</span></label>
+                    </div>
                 </div>
 
-                <button type="submit" id="generateBtn">Generate</button>
                 <p id="status" role="status"></p>
             </form>
 
             <section id="result" hidden>
                 <img id="qrPreview" alt="Generated QR code">
-                <a id="downloadBtn" download="giraso-qr.jpg">Download JPEG</a>
+                <div class="form-group">
+                    <label for="size">Download size</label>
+                    <select id="size">
+                        <option value="1000">1000 px · screens and documents</option>
+                        <option value="2000">2000 px · print</option>
+                    </select>
+                </div>
+                <button type="button" class="download-btn" data-format="png">Download PNG</button>
+                <div class="split">
+                    <button type="button" class="secondary-btn" data-format="svg">SVG</button>
+                    <button type="button" class="secondary-btn" data-format="jpeg">JPEG</button>
+                </div>
+                <div id="cta" class="cta" hidden>
+                    <strong>Need a website or app for your business?</strong>
+                    <p>Giraso builds websites, mobile apps and web applications in Burundi.</p>
+                    <a href="https://wa.me/25769667239?text=Hello%20Giraso%2C%20I%27d%20like%20to%20talk%20about%20a%20project" target="_blank" rel="noopener">Talk to us on WhatsApp</a>
+                </div>
             </section>
         </main>
 
         <footer>
-            <a href="https://giraso.bi/">giraso.bi</a>
+            <span>© Giraso Technologies</span>
+            <a href="/privacy">Privacy</a>
+            <a href="https://giraso.bi/" target="_blank" rel="noopener">giraso.bi</a>
         </footer>
     </div>
 
