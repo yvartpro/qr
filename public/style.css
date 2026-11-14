@@ -584,6 +584,137 @@ input[type="color"] {
     }
 }
 
+/* ---------- Tablet (≥ 720px) ---------- */
+@media (min-width: 720px) {
+    .page {
+        width: min(640px, calc(100% - 3rem));
+        padding: 3.5rem 0 4rem;
+    }
+
+    .page--app {
+        width: min(720px, calc(100% - 3rem));
+    }
+
+    .brand {
+        margin-bottom: 2.25rem;
+    }
+
+    .brand p {
+        max-width: 42ch;
+    }
+
+    .panel {
+        padding: 2rem;
+        border-radius: 22px;
+    }
+
+    .prose {
+        font-size: 1.02rem;
+    }
+
+    /* Result: QR on the left, download controls on the right */
+    #result {
+        display: grid;
+        grid-template-columns: 240px minmax(0, 1fr);
+        grid-template-rows: auto auto auto 1fr;
+        column-gap: 1.75rem;
+        align-items: start;
+        text-align: left;
+    }
+
+    #qrPreview {
+        grid-column: 1;
+        grid-row: 1 / span 4;
+        width: 100%;
+        margin: 0;
+    }
+
+    #result > .form-group,
+    #result > .download-btn,
+    #result > .split {
+        grid-column: 2;
+    }
+
+    #result > .form-group {
+        margin-bottom: 0.9rem;
+    }
+
+    #result .cta {
+        grid-column: 1 / -1;
+    }
+}
+
+/* ---------- Desktop (≥ 1080px) ---------- */
+@media (min-width: 1080px) {
+    .page--app {
+        width: min(1200px, calc(100% - 4rem));
+    }
+
+    .panel--app {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 380px;
+        column-gap: 2.75rem;
+        align-items: start;
+        padding: 2.5rem;
+    }
+
+    .panel--app > #qrForm {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .segmented {
+        grid-template-columns: repeat(8, 1fr);
+    }
+
+    /* Result becomes a sticky preview column */
+    .panel--app > #result {
+        display: block;
+        grid-column: 2;
+        grid-row: 1;
+        position: sticky;
+        top: 2rem;
+        margin: 0;
+        padding: 0 0 0 2.75rem;
+        border-top: none;
+        border-left: 1px solid var(--line);
+        text-align: center;
+    }
+
+    .panel--app #qrPreview {
+        width: 100%;
+        margin: 0 auto 1.25rem;
+    }
+
+    .panel--app #result > .form-group {
+        margin-bottom: 1.15rem;
+    }
+
+    /* Placeholder in the preview column until a code is generated */
+    .panel--app:has(#result[hidden])::after {
+        content: "Your QR code will appear here";
+        grid-column: 2;
+        grid-row: 1;
+        position: sticky;
+        top: 2rem;
+        display: grid;
+        place-items: center;
+        aspect-ratio: 1;
+        margin-left: 2.75rem;
+        padding: 2rem;
+        border: 1.5px dashed #b7c4ba;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #fafcf9 0%, #f4f8f4 100%);
+        color: var(--muted);
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    #status {
+        text-align: left;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     * {
         transition: none !important;
