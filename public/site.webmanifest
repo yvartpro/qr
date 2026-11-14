@@ -1,1 +1,31 @@
-{"name":"","short_name":"","icons":[{"src":"/android-chrome-192x192.png","sizes":"192x192","type":"image/png"},{"src":"/android-chrome-512x512.png","sizes":"512x512","type":"image/png"}],"theme_color":"#ffffff","background_color":"#ffffff","display":"standalone"}
+{
+    "id": "/",
+    "name": "Giraso QR generator",
+    "short_name": "Giraso QR",
+    "description": "Make QR codes for links, WhatsApp, Wi-Fi, contact cards and more. Add your logo and colors, then download or share.",
+    "start_url": "/?source=pwa",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "any",
+    "theme_color": "#FAF8F3",
+    "background_color": "#FAF8F3",
+    "lang": "en",
+    "categories": ["productivity", "utilities", "business"],
+    "icons": [
+        { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+        { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+        { "src": "/maskable-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+        { "src": "/maskable-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ],
+    "shortcuts": [
+        { "name": "Link QR code", "short_name": "Link", "url": "/?type=url&source=shortcut", "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }] },
+        { "name": "WhatsApp QR code", "short_name": "WhatsApp", "url": "/?type=whatsapp&source=shortcut", "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }] },
+        { "name": "Wi-Fi QR code", "short_name": "Wi-Fi", "url": "/?type=wifi&source=shortcut", "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }] },
+        { "name": "Contact card QR code", "short_name": "Contact", "url": "/?type=vcard&source=shortcut", "icons": [{ "src": "/android-chrome-192x192.png", "sizes": "192x192" }] }
+    ],
+    "share_target": {
+        "action": "/",
+        "method": "GET",
+        "params": { "title": "title", "text": "text", "url": "url" }
+    }
+}

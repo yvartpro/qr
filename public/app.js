@@ -18,6 +18,12 @@ const dynamicCreate = document.getElementById("dynamicCreate");
 const dynamicResult = document.getElementById("dynamicResult");
 const wifiEncryption = document.getElementById("wifiEncryption");
 const wifiPasswordGroup = document.getElementById("wifiPasswordGroup");
+const typePicker = document.getElementById("typePicker");
+const segments = [...form.querySelectorAll(".segment")];
+const navButtons = [...document.querySelectorAll(".bottom-nav [data-group]")];
+const shareBtn = document.getElementById("shareBtn");
+const installBtn = document.getElementById("installBtn");
+const iosHint = document.getElementById("iosHint");
 
 const PREVIEW_DELAY = 350;
 const PREVIEW_ICON_SIDE = 256;
@@ -28,6 +34,11 @@ let previewIcon = null;
 let previewTimer = null;
 let previewRequest = null;
 let dynamicLink = null;
+let previewBlob = null;
+let installPrompt = null;
+
+// Last type used in each bottom-nav group, so switching tabs comes back to it.
+const lastInGroup = {};
 
 const activeType = () => form.querySelector('input[name="type"]:checked').value;
 const activePanel = () => form.querySelector(`.fields[data-type="${activeType()}"]`);
@@ -57,7 +68,17 @@ function buildRequest(format, size, forPreview) {
 }
 
 async function requestImage(data, signal) {
-    const response = await fetch("/api/generate", { method: "POST", body: data, signal });
+    let response;
+
+    try {
+        response = await fetch("/api/generate", { method: "POST", body: data, signal });
+    } catch (error) {
+        if (error.name === "AbortError") throw error;
+        throw new Error(navigator.onLine === false
+            ? "You're offline. Connect to the internet to make a code."
+            : "Couldn't reach the server. Check your connection and try again.");
+    }
+
     const contentType = response.headers.get("content-type") || "";
 
     if (!response.ok || !contentType.includes("image/")) {
@@ -79,6 +100,7 @@ function hidePreview() {
     }
 
     qrPreview.removeAttribute("src");
+    previewBlob = null;
     result.hidden = true;
     result.classList.remove("is-stale");
 }
@@ -114,6 +136,7 @@ async function updatePreview() {
         }
 
         objectUrl = URL.createObjectURL(blob);
+        previewBlob = blob;
         qrPreview.src = objectUrl;
         result.hidden = false;
         result.classList.remove("is-stale");
@@ -219,7 +242,40 @@ function showPanel() {
         panel.hidden = panel !== activePanel();
     });
 
+    syncGroup();
     schedulePreview();
+}
+
+const segmentFor = (type) => form.querySelector(`input[name="type"][value="${type}"]`)?.closest(".segment");
+
+/** Mobile and tablet: the bottom nav picks a group, the switcher shows only that group's types. */
+function syncGroup() {
+    const group = segmentFor(activeType()).dataset.group;
+    const members = segments.filter((segment) => segment.dataset.group === group);
+
+    lastInGroup[group] = activeType();
+    segments.forEach((segment) => segment.classList.toggle("out-of-group", segment.dataset.group !== group));
+    typePicker.classList.toggle("single-type", members.length < 2);
+
+    navButtons.forEach((button) => {
+        const active = button.dataset.group === group;
+        button.classList.toggle("is-active", active);
+
+        if (active) {
+            button.setAttribute("aria-current", "true");
+        } else {
+            button.removeAttribute("aria-current");
+        }
+    });
+}
+
+function selectType(type) {
+    const input = segmentFor(type)?.querySelector("input");
+
+    if (input && !input.checked) {
+        input.checked = true;
+        showPanel();
+    }
 }
 
 function syncDynamic() {
@@ -268,6 +324,17 @@ form.addEventListener("input", (event) => {
 
 form.querySelectorAll('input[name="type"]').forEach((input) => {
     input.addEventListener("change", showPanel);
+});
+
+navButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+        const group = button.dataset.group;
+        const first = segments.find((segment) => segment.dataset.group === group).querySelector("input").value;
+
+        selectType(lastInGroup[group] || first);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        activePanel().querySelector("[data-primary]")?.focus({ preventScroll: true });
+    });
 });
 
 wifiEncryption.addEventListener("change", () => {
@@ -349,3 +416,113 @@ clearIcon.addEventListener("click", (event) => {
     iconInput.value = "";
     setIcon(null);
 });
+
+/* ---------- Share ---------- */
+
+function canShareFiles() {
+    try {
+        return Boolean(navigator.canShare?.({ files: [new File([""], "qr.png", { type: "image/png" })] }));
+    } catch {
+        return false;
+    }
+}
+
+shareBtn.hidden = !canShareFiles();
+
+shareBtn.addEventListener("click", async () => {
+    if (!previewBlob) return;
+
+    // Uses the preview already on screen, so the share sheet opens straight from the tap.
+    const file = new File([previewBlob], "giraso-qr.png", { type: "image/png" });
+
+    try {
+        await navigator.share({ files: [file], title: "QR code" });
+        cta.hidden = false;
+    } catch (error) {
+        if (error.name !== "AbortError") {
+            status.textContent = "Sharing isn't available here. Download the PNG instead.";
+        }
+    }
+});
+
+/* ---------- Opened from a shortcut, a shared link or ?type= ---------- */
+
+function applyLaunchParams() {
+    const params = new URLSearchParams(location.search);
+    const type = params.get("type");
+    const sharedUrl = params.get("url");
+    const sharedText = [params.get("title"), params.get("text")].filter(Boolean).join(" ").trim();
+    const linkInText = sharedText.match(/https?:\/\/\S+/)?.[0];
+
+    if (sharedUrl || linkInText) {
+        selectType("url");
+        urlInput.value = sharedUrl || linkInText;
+    } else if (sharedText) {
+        selectType("text");
+        document.getElementById("text").value = sharedText;
+    } else if (type) {
+        selectType(type);
+    }
+
+    if (location.search) {
+        history.replaceState(null, "", location.pathname);
+    }
+
+    syncGroup();
+
+    if (sharedUrl || sharedText) {
+        schedulePreview();
+    }
+}
+
+applyLaunchParams();
+
+/* ---------- Install ---------- */
+
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+if (isIos && !isStandalone()) {
+    installBtn.hidden = false;
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    installBtn.hidden = false;
+});
+
+window.addEventListener("appinstalled", () => {
+    installPrompt = null;
+    installBtn.hidden = true;
+    iosHint.hidden = true;
+});
+
+installBtn.addEventListener("click", async () => {
+    if (!installPrompt) {
+        iosHint.hidden = !iosHint.hidden;
+        return;
+    }
+
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+
+    installPrompt = null;
+
+    if (outcome === "accepted") {
+        installBtn.hidden = true;
+    }
+});
+
+document.addEventListener("pointerdown", (event) => {
+    if (!iosHint.hidden && !iosHint.contains(event.target) && !installBtn.contains(event.target)) {
+        iosHint.hidden = true;
+    }
+});
+
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+    });
+}

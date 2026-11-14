@@ -771,7 +771,7 @@ input[type="color"] {
     #result {
         display: grid;
         grid-template-columns: 240px minmax(0, 1fr);
-        grid-template-rows: auto auto auto 1fr;
+        grid-template-rows: auto auto auto auto 1fr;
         column-gap: 1.75rem;
         align-items: start;
         text-align: left;
@@ -779,13 +779,14 @@ input[type="color"] {
 
     #qrPreview {
         grid-column: 1;
-        grid-row: 1 / span 4;
+        grid-row: 1 / span 5;
         width: 100%;
         margin: 0;
     }
 
     #result > .form-group,
     #result > .download-btn,
+    #result > .share-btn,
     #result > .split {
         grid-column: 2;
     }
@@ -867,6 +868,217 @@ input[type="color"] {
 
     #status {
         text-align: left;
+    }
+}
+
+/* ---------- App shell: top app bar, bottom nav, share (mobile & tablet) ---------- */
+.appbar,
+.bottom-nav {
+    display: none;
+}
+
+.share-btn {
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+
+.share-btn svg,
+.install-btn svg,
+.ios-hint svg,
+.bottom-nav svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.share-btn svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+@media (max-width: 1079px) {
+    body {
+        padding-bottom: calc(4.25rem + env(safe-area-inset-bottom));
+    }
+
+    .appbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: calc(0.7rem + env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0.7rem max(1rem, env(safe-area-inset-left));
+        border-bottom: 1px solid rgba(215, 221, 216, 0.7);
+        background: rgba(250, 248, 243, 0.88);
+        -webkit-backdrop-filter: saturate(1.4) blur(14px);
+        backdrop-filter: saturate(1.4) blur(14px);
+    }
+
+    .appbar-brand {
+        display: flex;
+        flex-direction: column;
+        color: var(--ink);
+        text-decoration: none;
+        line-height: 1.1;
+    }
+
+    .appbar-logo {
+        font-family: var(--font-display);
+        font-size: 1.45rem;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+    }
+
+    .appbar-subtitle {
+        margin-top: 0.1rem;
+        color: var(--leaf);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .install-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.5rem 0.9rem;
+        border: 0;
+        border-radius: 999px;
+        background: var(--leaf);
+        color: #fff;
+        font: inherit;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .install-btn[hidden] {
+        display: none;
+    }
+
+    .install-btn svg {
+        width: 1rem;
+        height: 1rem;
+        stroke-width: 2.2;
+    }
+
+    .ios-hint {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        right: 1rem;
+        max-width: 17rem;
+        padding: 0.8rem 0.95rem;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        box-shadow: 0 18px 40px rgba(20, 32, 26, 0.16);
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    .ios-hint svg {
+        width: 1.05rem;
+        height: 1.05rem;
+        margin: 0 0.1rem;
+        vertical-align: -0.2rem;
+        color: #007aff;
+    }
+
+    .page--app {
+        padding-top: 1.25rem;
+    }
+
+    .page--app .brand {
+        display: none;
+    }
+
+    /* The bottom nav replaces the full type list: only the active group's types show. */
+    .type-picker .field-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+
+    .type-picker .segmented {
+        grid-template-columns: none;
+        grid-auto-columns: 1fr;
+        grid-auto-flow: column;
+    }
+
+    .type-picker .segment.out-of-group,
+    .type-picker.single-type {
+        display: none;
+    }
+
+    .bottom-nav {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 30;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 0.35rem max(0.5rem, env(safe-area-inset-right)) calc(0.35rem + env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+        border-top: 1px solid rgba(215, 221, 216, 0.8);
+        background: rgba(255, 255, 255, 0.92);
+        -webkit-backdrop-filter: saturate(1.4) blur(14px);
+        backdrop-filter: saturate(1.4) blur(14px);
+    }
+
+    .bottom-nav button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+        padding: 0.3rem 0 0.25rem;
+        border: 0;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .bottom-nav svg {
+        width: 3.5rem;
+        height: 1.95rem;
+        padding: 0.25rem 0;
+        border-radius: 999px;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .bottom-nav button.is-active {
+        color: var(--leaf-deep);
+    }
+
+    .bottom-nav button.is-active svg {
+        background: var(--glow);
+        color: var(--leaf);
+    }
+
+    .bottom-nav button:focus-visible {
+        outline: none;
+    }
+
+    .bottom-nav button:focus-visible svg {
+        outline: 2px solid var(--leaf);
+        outline-offset: 1px;
+    }
+}
+
+/* Installed app: no page-style scroll bounce under the bars. */
+@media (display-mode: standalone) {
+    body {
+        overscroll-behavior-y: none;
     }
 }
 
