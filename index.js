@@ -207,6 +207,10 @@ app.get("/r/:slug", limiter(1, 300), (req, res) => {
     res.redirect(302, destination);
 });
 
+app.use("/flags", express.static(path.join(__dirname, "node_modules", "country-flag-icons", "3x2"), {
+    maxAge: "30d",
+    immutable: true
+}));
 app.use(express.static(PUBLIC_DIR, { extensions: ["html"] }));
 
 app.use((err, req, res, next) => {

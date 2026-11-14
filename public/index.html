@@ -78,7 +78,7 @@
                 <div class="fields" data-type="whatsapp" hidden>
                     <div class="form-group">
                         <label for="waPhone">WhatsApp number</label>
-                        <input id="waPhone" name="wa_phone" type="tel" placeholder="+257 79 000 000" data-primary>
+                        <input id="waPhone" name="wa_phone" type="tel" data-phone data-primary>
                     </div>
                     <div class="form-group">
                         <label for="waMessage">Ready-made message <span class="optional">(optional)</span></label>
@@ -126,7 +126,7 @@
                     </div>
                     <div class="form-group">
                         <label for="vcPhone">Phone <span class="optional">(optional)</span></label>
-                        <input id="vcPhone" name="vc_phone" type="tel" autocomplete="tel" placeholder="+257 79 000 000">
+                        <input id="vcPhone" name="vc_phone" type="tel" data-phone autocomplete="tel">
                     </div>
                     <div class="form-group">
                         <label for="vcEmail">Email <span class="optional">(optional)</span></label>
@@ -141,7 +141,7 @@
                 <div class="fields" data-type="phone" hidden>
                     <div class="form-group">
                         <label for="phone">Phone number</label>
-                        <input id="phone" name="phone" type="tel" placeholder="+257 79 000 000" data-primary>
+                        <input id="phone" name="phone" type="tel" data-phone data-primary>
                     </div>
                 </div>
 
@@ -163,7 +163,7 @@
                 <div class="fields" data-type="sms" hidden>
                     <div class="form-group">
                         <label for="smsPhone">Phone number</label>
-                        <input id="smsPhone" name="sms_phone" type="tel" placeholder="+257 79 000 000" data-primary>
+                        <input id="smsPhone" name="sms_phone" type="tel" data-phone data-primary>
                     </div>
                     <div class="form-group">
                         <label for="smsMessage">Message <span class="optional">(optional)</span></label>
@@ -266,5 +266,6 @@
     </div>
 
     <script src="/app.js"></script>
+    <script type="module" src="/phone.js"></script>
 </body>
 </html>
